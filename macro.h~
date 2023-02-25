@@ -1,0 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct node *ptr;
+typedef struct node {
+char* name;
+char* data;
+ptr next;
+}macro;
+
+void addtolist( ptr* , char* );
+freelist(ptr*);

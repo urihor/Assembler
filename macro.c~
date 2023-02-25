@@ -1,0 +1,18 @@
+#include "macro.h"
+
+void addtolist( ptr* hptr , char* name1){
+ptr t;
+ptr p;
+t = (ptr) malloc (sizeof(macro));
+if(!t){
+printf("cannot build\n\n");
+exit(0);
+}
+
+
+
+strcpy(t->name , name1);
+p =*hptr;
+*hptr = t ;
+t->next = p; 
+}

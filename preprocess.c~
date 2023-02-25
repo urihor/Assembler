@@ -1,0 +1,226 @@
+#include "preprocess.h"
+
+void preprocess( FILE ** fd , FILE ** fd1 , char* name){
+
+	
+	int  flag = 0 , counter = 0 , curr  ;
+	fpos_t pos;
+	char line[MAX_LINE];
+	char word[MAX_LINE];
+	ptr hptr = NULL;
+	ptr pt;
+	char* q;
+	
+	*fd = openas( *fd , name );
+	
+	*fd1 = openam( *fd1 , name  );
+	
+	fgetpos( *fd , &pos );
+	fgetc( *fd );
+		
+	while( !feof( *fd ) ){
+	
+		fsetpos( *fd , &pos );
+		
+		curr = 0;
+		
+		fgets( line , MAX_LINE , *fd );
+		
+		getword( line , word , &curr );
+		
+		
+		if ( !flag ){
+			
+		
+			if( !strcmp( word , "mcr")){
+		
+				flag = 1;
+			
+			
+				getword( line , word , &curr );
+				checkmacro( word );
+				pt = findmacro( hptr , word );
+				if( pt ){
+				
+					fprintf( stderr ,"2 macros with the same name");
+					exit(0);
+				}
+				
+				else{
+					
+					addtomacrolist( &hptr , word );
+					hptr->data = (char*) malloc( sizeof( char ) );
+				
+				}	
+		
+			}
+		
+			else{
+			
+				pt = findmacro( hptr , word );
+			
+				if( pt ){
+				
+					fputs( pt-> data , *fd1);
+			
+				}
+			
+				else{
+				
+					fputs( line , *fd1);
+				
+				}	
+		
+			}
+		
+			
+		
+		}
+		
+		else {
+			
+			
+			if( !strcmp( word , "endmcr")){
+			
+				flag = 0 ;
+				counter = 0;
+				
+			}
+			
+			else{
+			
+				counter += strlen( line );
+				q = ( char * ) realloc ( hptr -> data , counter  );
+				if(!q){
+					fprintf("error");
+					exit(0);
+		
+				}
+				hptr -> data = q;
+				strcat( hptr -> data , line );
+		
+			
+			}
+			
+			
+		}
+		
+		fgetpos( *fd , &pos );
+		fgetc( *fd );
+		
+	}
+		
+	freemacrolist( &hptr );	
+		
+}
+
+FILE* openas( FILE * fd  , char* name ){
+
+	char filename[MAX_FILE];
+	strcpy( filename , name );
+
+	fd = fopen( strcat( filename , ".as" ), "r+" );
+	
+	if( !fd ){ /* the file didn't open successfuly */
+	
+		fprintf( stderr , "\nCannot open file \n\n" );
+		fprintf( stderr , "----------------------------------------------------------------\n\n" );
+		exit(0);
+		}
+	return fd;	
+
+}
+
+FILE* openam( FILE * fd1  , char* name ){
+
+	char filename[MAX_FILE];
+	strcpy( filename , name );
+	
+	fd1 = fopen( strcat( filename , ".am" ) , "w+" );
+	
+	if( !fd1 ){ /* the file didn't open successfuly */
+	
+		fprintf( stderr , "\nCannot create file \n\n" );
+		fprintf( stderr , "----------------------------------------------------------------\n\n" );
+		exit(0);
+		}
+		
+	return fd1;	
+
+}
+
+
+void addtomacrolist( ptr* hptr, char nameofmac[] ){
+
+
+	ptr t , p ;
+	t = ( ptr ) malloc ( sizeof ( macro ) );
+	
+	if( !t ){
+	
+		printf("cannot build\n\n");
+		exit(0);
+		
+	}
+	
+	strcpy( t -> name , nameofmac );
+	p = *hptr;
+	*hptr = t ;
+	t->next = p ; 
+
+}
+
+void freemacrolist( ptr* hptr ){
+
+	ptr p;
+	
+	while( *hptr ){
+	
+		p = *hptr;
+		*hptr = ( (*hptr) -> next);
+		free(p->data);
+		free(p);
+		
+	}
+
+}
+
+/*void printlist( ptr hptr ){
+
+	while( hptr ){
+	
+		printf("%s\n" , hptr -> name);
+		hptr = hptr -> next;
+	
+	}
+
+
+}*/
+
+
+ptr findmacro(ptr hptr , char name1[] ){
+
+	while( hptr && strcmp ( ((hptr) -> name) , name1 ) ){
+	
+		hptr = ((hptr) -> next);
+		
+	}
+	return hptr;
+
+}
+
+void checkmacro( char macro[] ){
+
+	int  i;
+	char* instructions[] = { "mov","cmp","add","sub","not","clr","lea","inc","dec","jmp","bne","red","prn","jsr","rts","stop"};
+
+	for( i = 0 ; i < 16 ; i++ ){
+		if( !strcmp ( macro , instructions[i]) )
+			fprintf( stdout , "error" );	
+	
+	} 
+
+
+}
+
+
